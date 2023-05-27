@@ -1,0 +1,28 @@
+{
+  "userList": [
+    {
+      "name": "Teacher One",
+      "email": "teacherone@example.com",
+      "password": "password123",
+      "teacher": true
+    },
+    {
+      "name": "Teacher Two",
+      "email": "teachertwo@example.com",
+      "password": "password456",
+      "teacher": true
+    },
+    {
+      "name": "Child One",
+      "email": "childone@example.com",
+      "password": "12345678",
+      "teacher": false
+    },
+    {
+      "name": "Child Two",
+      "email": "childtwo@example.com",
+      "password": "123456789",
+      "teacher": false
+    }
+  ]
+}
