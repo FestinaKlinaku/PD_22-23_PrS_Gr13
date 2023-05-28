@@ -78,7 +78,7 @@
       </form>
       <div class="register_question">
         <span class="register_span">Already have an account? </span>
-        <router-link class="register_link" to="/login">Login</router-link>
+        <router-link class="register_link" to="/">Login</router-link>
       </div>
     </div>
   </div>

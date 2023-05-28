@@ -3,6 +3,7 @@
     <div class="login_container">
       <h2 class="login_title">Login</h2>
       <form class="login_form" @submit.prevent="login">
+        <!-- Email input -->
         <div class="login_group">
           <baseInput
             id="email"
@@ -20,6 +21,8 @@
             </p>
           </template>
         </div>
+
+        <!-- Password input -->
         <div class="login_group">
           <baseInput
             id="password"
@@ -40,6 +43,8 @@
             </p>
           </template>
         </div>
+
+        <!-- Login button -->
         <div class="login_group">
           <baseButton
             type="submit"
@@ -52,6 +57,8 @@
           </p>
         </div>
       </form>
+
+      <!-- Registration link -->
       <div class="login_question">
         <span class="login_span">Don't have an account? </span>
         <router-link class="login_link" to="/register">Sign Up</router-link>
@@ -64,7 +71,7 @@
 import baseInput from "@/components/baseInput/baseInput.vue";
 import baseButton from "@/components/baseButton/baseButton.vue";
 import { required, email, minLength } from "vuelidate/lib/validators";
-import axios from "axios";
+import { mapActions } from "vuex";
 
 export default {
   components: {
@@ -95,6 +102,7 @@ export default {
     };
   },
   methods: {
+    ...mapActions("auth", ["authenticateUser"]),
     login() {
       this.isSubmitted = true;
       this.$v.$touch();
@@ -106,28 +114,15 @@ export default {
       // Retrieve the email and password entered by the user
       const { email, password } = this.userForm;
 
-      // Read the users.json file
-      axios
-        .get("http://localhost:3000/users.json")
-        .then((response) => {
-          const users = response.data.userList;
-
-          // Find the user with matching email and password
-          const user = users.find(
-            (user) => user.email === email && user.password === password
-          );
-
-          if (user) {
-            // User is found, navigate to the dashboard
-            this.$router.push("/dashboard");
-          } else {
-            // Invalid email or password, show an error message
-            alert("Invalid email or password");
-          }
+      // Call the authenticateUser action
+      this.authenticateUser({ email, password })
+        .then(() => {
+          // Authentication successful, navigate to the dashboard
+          this.$router.push("/home");
         })
-        .catch((error) => {
-          console.error(error);
-          alert("An error occurred while logging in. Please try again later.");
+        .catch(() => {
+          // Invalid email or password, show an error message
+          alert("Invalid email or password");
         });
     },
   },
