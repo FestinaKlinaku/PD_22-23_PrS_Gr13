@@ -49,7 +49,7 @@
       <div class="container">
         <div class="col-lg-6 offset-lg-3">
           <div v-if="ready">
-            <p v-for="user in info">{{user.username}} {{user.type}}</p>
+            <p v-for="user in info">{{ user.username }} {{ user.type }}</p>
           </div>
 
           <div v-if="!ready">
@@ -93,44 +93,75 @@
                   <h4>Assignments</h4>
                 </div>
                 <div class="card-body">
-                  <div class="card" style="border:none">
-                    <div class="card-header text-white bg-info" style="border: 1px solid rgba(0,0,0,.125);">
-                      <h5>Assignment 1</h5>
+                  <div
+                    class="card"
+                    v-for="(assignment, index) in assignments"
+                    :key="index"
+                    style="border: none"
+                  >
+                    <div
+                      class="card-header text-white bg-info"
+                      style="border: 1px solid rgba(0, 0, 0, 0.125)"
+                    >
+                      <h5>{{ assignment.title }}</h5>
                     </div>
                     <div class="card-body">
-                      <p>Description of Assignment 1</p>
+                      <p>{{ assignment.description }}</p>
                     </div>
                   </div>
-                  <div class="card" style="border:none">
-                    <div class="card-header text-white bg-info" style="border: 1px solid rgba(0,0,0,.125);">
-                      <h5>Assignment 2</h5>
+                </div>
+                <div v-if="isTeacher">
+                  <div class="card">
+                    <div class="card-header">
+                      <h5>Add Assignment</h5>
                     </div>
                     <div class="card-body">
-                      <p>Description of Assignment 2</p>
+                      <form @submit.prevent="addAssignment">
+                        <div class="form-group">
+                          <input
+                            type="text"
+                            class="form-control"
+                            v-model="newAssignment.title"
+                            placeholder="Title"
+                          />
+                        </div>
+                        <div class="form-group">
+                          <textarea
+                            class="form-control"
+                            v-model="newAssignment.description"
+                            placeholder="Description"
+                          ></textarea>
+                        </div>
+                        <div class="form-group">
+                          <input
+                            type="submit"
+                            value="Submit"
+                            class="btn btn-sm btn-info"
+                          />
+                        </div>
+                      </form>
                     </div>
                   </div>
-                  <!-- Add more assignments as needed -->
                 </div>
               </div>
-            </div>         
             </div>
             <div v-if="selectedTab === 'chat'">
-              <h2>{{username}}</h2>
+              <h2>{{ username }}</h2>
               <div class="card bg-info" v-if="ready">
                 <div class="card-header text-white">
                   <h4>
                     Chatroom
-                    <span class="float-right">{{connections}} connected</span>
+                    <span class="float-right">{{ connections }} connected</span>
                   </h4>
                 </div>
                 <ul class="list-group list-group-flush text-right">
                   <small v-if="typing" class="text-white"
-                    >{{typing}} is typing</small
+                    >{{ typing }} is typing</small
                   >
                   <li class="list-group-item" v-for="message in messages">
                     <span :class="{'float-left':message.type === 1}">
-                      {{message.message}}
-                      <small>:{{message.user}}</small>
+                      {{ message.message }}
+                      <small>:{{ message.user }}</small>
                     </span>
                   </li>
                 </ul>
@@ -182,12 +213,27 @@
         info: [],
         connections: 0,
         selectedTab: "assignments",
+        isTeacher: false,
+        assignments: [],
+        newAssignment: {
+          title: "",
+          description: "",
+        },
       },
 
       created() {
         window.onbeforeunload = () => {
           socket.emit("leave", this.username);
         };
+
+        fetch("./assignments.json")
+          .then((response) => response.json())
+          .then((data) => {
+            this.assignments = data;
+          })
+          .catch((error) => {
+            console.error("Error fetching assignments:", error);
+          });
 
         socket.on("chat-message", (data) => {
           this.messages.push({
@@ -232,6 +278,10 @@
         socket.on("connections", (data) => {
           this.connections = data;
         });
+
+        socket.on("new-assignment", (data) => {
+          this.assignments = data;
+        });
       },
 
       watch: {
@@ -266,6 +316,7 @@
           if (user) {
             // User found, allow registration
             this.ready = true;
+            this.isTeacher = user.teacher;
             socket.emit("joined", {
               username: this.username,
               password: this.password,
@@ -280,6 +331,36 @@
         },
         showChat() {
           this.selectedTab = "chat";
+        },
+        addAssignment() {
+          if (this.newAssignment.title && this.newAssignment.description) {
+            // Create the assignment object
+            const assignmentData = {
+              title: this.newAssignment.title,
+              description: this.newAssignment.description,
+            };
+
+            const updatedData = JSON.stringify(assignmentData);
+            console.log(updatedData)
+            // Send the updated JSON data to the server
+            fetch("/assignments.json", {
+              method: "post",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: updatedData,
+            })
+              .then((response) => {
+                console.log("Assignment added and saved successfully!");
+              })
+              .catch((error) => {
+                console.error("Error saving assignment:", error);
+              });
+
+            // Reset the form fields
+            this.newAssignment.title = "";
+            this.newAssignment.description = "";
+          }
         },
       },
     });
